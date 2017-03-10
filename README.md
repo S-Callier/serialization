@@ -39,7 +39,7 @@ SerializerFactory serializerFactory = new SerializerFactory(cache);
 DeserializerFactory deserializerFactory = new DeserializerFactory(cache);
 ```
 
-For the serializers (resp. deserializers) the method write (resp. read) as an optional codec argument.
+For the serializers (resp. deserializers) the method write (resp. read) has an optional codec argument.
 If the codec is provided, it will be used as is, otherwise the right codec will be found in the cache (which is slightly slower).
 
 ## Adding extra codecs 
