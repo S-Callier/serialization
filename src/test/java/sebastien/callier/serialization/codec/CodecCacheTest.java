@@ -17,8 +17,14 @@
 package sebastien.callier.serialization.codec;
 
 import org.junit.Test;
+import sebastien.callier.serialization.codec.object.ListCodec;
+import sebastien.callier.serialization.codec.object.QueueCodec;
 import sebastien.callier.serialization.codec.primitive.LongCodec;
+import sebastien.callier.serialization.exceptions.MissingCodecException;
 
+import java.util.LinkedList;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -39,5 +45,17 @@ public class CodecCacheTest {
                 is((byte) (-127 + longCodec.reservedBytes().length)));
     }
 
+    @Test
+    public void codecOrdering() throws MissingCodecException {
+        CodecCache cache = new CodecCache();
+        cache.register(new QueueCodec(cache.nextFreeMarker(), cache));
+        cache.register(new ListCodec(cache.nextFreeMarker(), cache));
 
+        CodecCache reversed = new CodecCache();
+        reversed.register(new ListCodec(reversed.nextFreeMarker(), cache));
+        reversed.register(new QueueCodec(reversed.nextFreeMarker(), cache));
+
+        assertThat(cache.codecFor(new LinkedList<>()), instanceOf(QueueCodec.class));
+        assertThat(reversed.codecFor(new LinkedList<>()), instanceOf(ListCodec.class));
+    }
 }
