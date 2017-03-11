@@ -23,6 +23,7 @@ import sebastien.callier.serialization.stream.FastOutputStream;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * @author Sebastien Callier
@@ -65,12 +66,36 @@ public class Serializer implements Closeable {
         wrapper.close();
     }
 
+    /**
+     * Returns the backing byte array as is.
+     * Its size will most likely be larger than the number of valid bytes in the buffer.
+     * Please check {@link #currentSize()}
+     * This method is copy free just like {@link #asByteBuffer()}.
+     *
+     * @return the data written so far
+     */
     public byte[] getByteArray() throws IOException {
         return out.getByteArray();
     }
 
+    /**
+     * Returns a copy of the backing array with the minimum required size.
+     * Consider using {@link #getByteArray()} or {@link #asByteBuffer()} when possible.
+     *
+     * @return the data written so far
+     */
     public byte[] asByteArray() throws IOException {
         return out.asByteArray();
+    }
+
+    /**
+     * Returns a ByteBuffer wrapping the backing array.
+     * This method is copy free just like {@link #getByteArray()}.
+     *
+     * @return the data written so far
+     */
+    public ByteBuffer asByteBuffer() {
+        return ByteBuffer.wrap(out.getByteArray(), 0, out.getSize());
     }
 
     /**

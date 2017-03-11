@@ -18,10 +18,15 @@ package sebastien.callier.serialization.serializer;
 
 import org.junit.Test;
 import sebastien.callier.serialization.codec.CodecCache;
+import sebastien.callier.serialization.codec.object.StringCodec;
 import sebastien.callier.serialization.exceptions.MissingCodecException;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Date;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author Sebastien Callier
@@ -33,6 +38,29 @@ public class SerializerTest {
         Date unsupported = new Date();
         try (Serializer serializer = new Serializer(new CodecCache())) {
             serializer.append(unsupported);
+        }
+    }
+
+    @Test
+    public void outputMethodsReturnSameData() throws IOException {
+        CodecCache cache = new CodecCache();
+        cache.register(new StringCodec(cache.nextFreeMarker(), 0));
+
+        Serializer serializer = new Serializer(cache);
+        serializer.append("testString");
+        serializer.close();
+
+        byte[] backingArray = serializer.getByteArray();
+        int size = serializer.currentSize();
+        byte[] copyArray = serializer.asByteArray();
+        ByteBuffer byteBuffer = serializer.asByteBuffer();
+
+        assertThat(copyArray.length, is(size));
+        assertThat(byteBuffer.remaining(), is(size));
+
+        for (int i = 0; i < size; i++) {
+            assertThat(backingArray[i], is(copyArray[i]));
+            assertThat(byteBuffer.get(), is(copyArray[i]));
         }
     }
 }
