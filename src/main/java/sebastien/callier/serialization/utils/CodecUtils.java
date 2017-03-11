@@ -37,14 +37,14 @@ public final class CodecUtils {
             OutputStreamWrapper wrapper,
             int size,
             byte value) throws IOException {
-        if (size < 65792) {
+        if (size < 65772) {
             if (size < 256) {
                 wrapper.writeByteAnd1(value, (byte) ((size - 128) & 0xFF));
             } else {
-                wrapper.writeByteAnd2((byte) (value + 1), size - 32896);
+                wrapper.writeByteAnd2((byte) (value + 1), size - 33024);
             }
-        } else if (size < 16843008) {
-            wrapper.writeByteAnd3((byte) (value + 2), size - 8421504);
+        } else if (size < 16842988) {
+            wrapper.writeByteAnd3((byte) (value + 2), size - 8454380);
         } else {
             wrapper.writeByteAnd4((byte) (value + 3), size);
         }
@@ -59,11 +59,20 @@ public final class CodecUtils {
         }
         switch (read - value) {
             case 0:
+                //value - Byte.MIN_VALUE
+                //read + 128
+                //max value 255
                 return (int) wrapper.read1() + 128;
             case 1:
-                return (int) wrapper.read2() + 32896;
+                //value - Short.MIN_VALUE + previous max value + 1
+                //read + 32768 + 255 + 1
+                //max value 65536 + 255 = 65771
+                return (int) wrapper.read2() + 33024;
             case 2:
-                return wrapper.read3() + 8421504;
+                //value - min value for 3 bytes + previous max value + 1
+                //read + 8388608 + 65771 + 1
+                //max value 16777216 + 65771 = 16842987
+                return wrapper.read3() + 8454380;
             case 3:
                 return wrapper.read4();
             default:

@@ -41,6 +41,13 @@ public class CodecUtilsTest {
             testSize(value);
             testSize(value + 1);
         }
+        //Test around the the tipping points
+        int[] values = new int[]{128, 256, 33024, 65772, 8454380, 16842988};
+        for (int value : values) {
+            testSize(value - 1);
+            testSize(value);
+            testSize(value + 1);
+        }
     }
 
     private void testSize(int value) throws IOException {
