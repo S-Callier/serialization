@@ -41,7 +41,14 @@ public class CodecCache {
         super();
         //always register null to its fixed position
         register(NULL_CODEC);
-        this.anyCodec = new AnyCodec(this);
+        anyCodec = new AnyCodec(this);
+    }
+
+    public CodecCache(CodecCache cache) {
+        super();
+        codecList.addAll(cache.codecList);
+        System.arraycopy(cache.codecArray, 0, codecArray, 0, cache.codecArray.length);
+        anyCodec = new AnyCodec(this);
     }
 
     /**
@@ -109,7 +116,7 @@ public class CodecCache {
      * Get a code able to handle a class
      *
      * @param clazz the class to read/write
-     * @return the codec or null
+     * @return the codec or throws MissingCodecException
      */
     @SuppressWarnings("unchecked")
     public <T> Codec<T> codecForClass(Class<T> clazz) throws MissingCodecException {

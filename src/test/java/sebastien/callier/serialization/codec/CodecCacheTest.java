@@ -16,16 +16,17 @@
 
 package sebastien.callier.serialization.codec;
 
+import org.junit.Assert;
 import org.junit.Test;
 import sebastien.callier.serialization.codec.object.ListCodec;
 import sebastien.callier.serialization.codec.object.QueueCodec;
+import sebastien.callier.serialization.codec.primitive.IntCodec;
 import sebastien.callier.serialization.codec.primitive.LongCodec;
 import sebastien.callier.serialization.exceptions.MissingCodecException;
 
 import java.util.LinkedList;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -57,5 +58,29 @@ public class CodecCacheTest {
 
         assertThat(cache.codecFor(new LinkedList<>()), instanceOf(QueueCodec.class));
         assertThat(reversed.codecFor(new LinkedList<>()), instanceOf(ListCodec.class));
+    }
+
+    @Test
+    public void copyConstructor() throws MissingCodecException {
+        CodecCache cache = new CodecCache();
+        cache.register(new LongCodec(cache.nextFreeMarker()));
+
+        CodecCache copy = new CodecCache(cache);
+        copy.register(new IntCodec(copy.nextFreeMarker()));
+
+        //initial cache
+        assertThat(cache.codecForClass(Long.class), notNullValue());
+
+        //copy + codec added
+        assertThat(copy.codecForClass(Long.class), notNullValue());
+        assertThat(copy.codecForClass(Integer.class), notNullValue());
+
+        //initial cache not affected
+        try {
+            cache.codecForClass(Integer.class);
+            Assert.fail("Missing exception");
+        } catch (MissingCodecException e) {
+            //expected
+        }
     }
 }
