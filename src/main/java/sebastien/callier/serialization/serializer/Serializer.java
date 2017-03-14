@@ -35,7 +35,7 @@ public class Serializer implements Closeable {
 
     private final CodecCache codecCache;
 
-    public Serializer(CodecCache codecCache) throws IOException {
+    public Serializer(CodecCache codecCache) {
         this.codecCache = codecCache;
         this.out = new FastOutputStream();
         this.wrapper = new OutputStreamWrapper(out);
@@ -43,7 +43,7 @@ public class Serializer implements Closeable {
 
     public Serializer(
             CodecCache codecCache,
-            int initialSize) throws IOException {
+            int initialSize) {
         this.codecCache = codecCache;
         this.out = new FastOutputStream(initialSize);
         this.wrapper = new OutputStreamWrapper(out);

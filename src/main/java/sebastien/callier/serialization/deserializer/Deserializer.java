@@ -32,7 +32,7 @@ public class Deserializer implements Closeable {
     private final FastInputStream input;
     private final CodecCache codecCache;
 
-    private Deserializer(CodecCache codecCache, FastInputStream input) throws IOException {
+    private Deserializer(CodecCache codecCache, FastInputStream input) {
         this.codecCache = codecCache;
         this.input = input;
         this.wrapper = new InputStreamWrapper(input);
@@ -42,7 +42,7 @@ public class Deserializer implements Closeable {
             CodecCache codecCache,
             byte[] data,
             int offset,
-            int length) throws IOException {
+            int length) {
         return new Deserializer(codecCache, new FastInputStream(data, offset, length));
     }
 

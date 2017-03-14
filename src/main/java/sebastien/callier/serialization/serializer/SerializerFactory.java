@@ -18,8 +18,6 @@ package sebastien.callier.serialization.serializer;
 
 import sebastien.callier.serialization.codec.CodecCache;
 
-import java.io.IOException;
-
 /**
  * @author Sebastien Callier
  * @since 2017
@@ -32,11 +30,11 @@ public class SerializerFactory {
         this.codecCache = codecCache;
     }
 
-    public Serializer newSerializer() throws IOException {
+    public Serializer newSerializer() {
         return new Serializer(codecCache);
     }
 
-    public Serializer newSerializer(int initialSize) throws IOException {
+    public Serializer newSerializer(int initialSize) {
         return new Serializer(codecCache, initialSize);
     }
 }
