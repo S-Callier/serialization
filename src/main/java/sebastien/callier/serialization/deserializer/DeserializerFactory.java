@@ -18,8 +18,6 @@ package sebastien.callier.serialization.deserializer;
 
 import sebastien.callier.serialization.codec.CodecCache;
 
-import java.io.IOException;
-
 /**
  * @author Sebastien Callier
  * @since 2017
@@ -35,7 +33,7 @@ public class DeserializerFactory {
     public Deserializer newDeserializer(
             byte[] data,
             int offset,
-            int length) throws IOException {
+            int length) {
         return Deserializer.newInstance(
                 codecCache,
                 data,
