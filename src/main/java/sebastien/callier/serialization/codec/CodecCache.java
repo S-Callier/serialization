@@ -44,13 +44,6 @@ public class CodecCache {
         anyCodec = new AnyCodec(this);
     }
 
-    public CodecCache(CodecCache cache) {
-        super();
-        codecList.addAll(cache.codecList);
-        System.arraycopy(cache.codecArray, 0, codecArray, 0, cache.codecArray.length);
-        anyCodec = new AnyCodec(this);
-    }
-
     /**
      * @return the next marker available in the cache
      */
