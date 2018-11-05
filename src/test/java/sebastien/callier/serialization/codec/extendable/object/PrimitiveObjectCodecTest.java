@@ -16,12 +16,12 @@
 
 package sebastien.callier.serialization.codec.extendable.object;
 
-import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import sebastien.callier.serialization.codec.Codec;
 import sebastien.callier.serialization.codec.CodecCache;
+import sebastien.callier.serialization.codec.array.*;
 import sebastien.callier.serialization.codec.primitive.*;
 import sebastien.callier.serialization.deserializer.Deserializer;
 import sebastien.callier.serialization.deserializer.DeserializerFactory;
@@ -51,22 +51,23 @@ public class PrimitiveObjectCodecTest {
         serializerFactory = new SerializerFactory(cache);
         deserializerFactory = new DeserializerFactory(cache);
 
-        BooleanCodec booleanCodec = new BooleanCodec(cache.nextFreeMarker());
-        cache.register(booleanCodec);
-        ByteCodec byteCodec = new ByteCodec(cache.nextFreeMarker());
-        cache.register(byteCodec);
-        CharCodec charCodec = new CharCodec(cache.nextFreeMarker());
-        cache.register(charCodec);
-        DoubleCodec doubleCodec = new DoubleCodec(cache.nextFreeMarker());
-        cache.register(doubleCodec);
-        FloatCodec floatCodec = new FloatCodec(cache.nextFreeMarker());
-        cache.register(floatCodec);
-        IntCodec intCodec = new IntCodec(cache.nextFreeMarker());
-        cache.register(intCodec);
-        LongCodec longCodec = new LongCodec(cache.nextFreeMarker());
-        cache.register(longCodec);
-        ShortCodec shortCodec = new ShortCodec(cache.nextFreeMarker());
-        cache.register(shortCodec);
+        cache.register(new BooleanCodec(cache.nextFreeMarker()));
+        cache.register(new ByteCodec(cache.nextFreeMarker()));
+        cache.register(new CharCodec(cache.nextFreeMarker()));
+        cache.register(new DoubleCodec(cache.nextFreeMarker()));
+        cache.register(new FloatCodec(cache.nextFreeMarker()));
+        cache.register(new IntCodec(cache.nextFreeMarker()));
+        cache.register(new LongCodec(cache.nextFreeMarker()));
+        cache.register(new ShortCodec(cache.nextFreeMarker()));
+
+        cache.register(new BooleanArrayCodec(cache.nextFreeMarker()));
+        cache.register(new ByteArrayCodec(cache.nextFreeMarker()));
+        cache.register(new CharArrayCodec(cache.nextFreeMarker()));
+        cache.register(new DoubleArrayCodec(cache.nextFreeMarker()));
+        cache.register(new FloatArrayCodec(cache.nextFreeMarker()));
+        cache.register(new IntArrayCodec(cache.nextFreeMarker()));
+        cache.register(new LongArrayCodec(cache.nextFreeMarker()));
+        cache.register(new ShortArrayCodec(cache.nextFreeMarker()));
     }
 
     @Test
@@ -93,9 +94,32 @@ public class PrimitiveObjectCodecTest {
     }
 
     @Test
+    public void testArrayGetters() throws Throwable {
+        Codec<PrimitiveArrayObject> codec = new ObjectCodec<>(
+                (byte) 51,
+                PrimitiveArrayObject.class,
+                cache);
+        cache.register(codec);
+
+        testObject(null, codec);
+        testObject(new PrimitiveArrayObject(), codec);
+
+        PrimitiveArrayObject object = new PrimitiveArrayObject();
+        object.setBool(new boolean[]{true});
+        object.setByt(new byte[]{(byte) 123});
+        object.setCha(new char[]{'c'});
+        object.setDoubl(new double[]{5.6D});
+        object.setFloa(new float[]{1.5F});
+        object.setIn(new int[]{123});
+        object.setLon(new long[]{1234L});
+        object.setShor(new short[]{(short) 12});
+        testObject(object, codec);
+    }
+
+    @Test
     public void testDirectAccess() throws Throwable {
         Codec<DirectPrimitiveObject> codec = new ObjectCodec<>(
-                (byte) 51,
+                (byte) 52,
                 DirectPrimitiveObject.class,
                 cache);
         cache.register(codec);
@@ -119,7 +143,7 @@ public class PrimitiveObjectCodecTest {
     public void testSneakyObject() throws Throwable {
         //For object referencing themselves
         Codec<SneakyObject> codec = new ObjectCodec<>(
-                (byte) 52,
+                (byte) 53,
                 SneakyObject.class,
                 cache);
         cache.register(codec);
@@ -202,7 +226,7 @@ public class PrimitiveObjectCodecTest {
                 0,
                 serializer.currentSize())) {
             assertThat(deserializer.read(), is(value));
-            MatcherAssert.assertThat(deserializer.read(codec), is(value));
+            assertThat(deserializer.read(codec), is(value));
             assertThat(deserializer.available(), is(0));
         }
     }

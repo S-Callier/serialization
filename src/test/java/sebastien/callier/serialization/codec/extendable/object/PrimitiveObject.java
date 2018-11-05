@@ -20,7 +20,7 @@ package sebastien.callier.serialization.codec.extendable.object;
  * @author Sebastien Callier
  * @since 2017
  */
-@SuppressWarnings({"WeakerAccess", "SameParameterValue"})
+@SuppressWarnings({"WeakerAccess", "SameParameterValue", "unused"})
 public class PrimitiveObject {
     private boolean bool;
     private byte byt;
@@ -102,12 +102,12 @@ public class PrimitiveObject {
         }
         PrimitiveObject other = (PrimitiveObject) o;
         return other.bool == bool &&
-               other.byt == byt &&
-               other.cha == cha &&
-               other.doubl == doubl &&//avoid NaN
-               other.floa == floa &&
-               other.in == in &&
-               other.lon == lon &&
-               other.shor == shor;
+                other.byt == byt &&
+                other.cha == cha &&
+                other.doubl == doubl &&//avoid NaN
+                other.floa == floa &&
+                other.in == in &&
+                other.lon == lon &&
+                other.shor == shor;
     }
 }

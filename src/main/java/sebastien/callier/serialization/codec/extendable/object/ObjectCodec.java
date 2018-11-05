@@ -21,6 +21,8 @@ import sebastien.callier.serialization.codec.CodecCache;
 import sebastien.callier.serialization.codec.extendable.object.field.AccessingFieldCodec;
 import sebastien.callier.serialization.codec.extendable.object.field.DirectFieldCodec;
 import sebastien.callier.serialization.codec.extendable.object.field.FieldCodec;
+import sebastien.callier.serialization.codec.extendable.object.field.LambdaMetaFactoryUtils;
+import sebastien.callier.serialization.codec.extendable.object.field.primitives.*;
 import sebastien.callier.serialization.deserializer.InputStreamWrapper;
 import sebastien.callier.serialization.exceptions.CodecGenerationException;
 import sebastien.callier.serialization.exceptions.MissingCodecException;
@@ -41,6 +43,12 @@ public class ObjectCodec<T> implements Codec<T> {
     private final byte reservedByte;
     private final Class<T> tClass;
     private final FieldCodec[] fields;
+    private final Creator creator;
+
+    @FunctionalInterface
+    public interface Creator {
+        Object build();
+    }
 
     /**
      * Will try to generate a codec for the provided class.
@@ -74,12 +82,12 @@ public class ObjectCodec<T> implements Codec<T> {
         this.reservedByte = reservedByte;
         this.tClass = tClass;
 
-        validateConstructor(tClass);
+        creator = generateConstructor(tClass);
         List<Field> toExtract = fieldsInOrder(tClass);
 
         for (Field field : toExtract) {
             if (!field.getType().equals(tClass) &&
-                cache.codecForClass(field.getType()) == null) {
+                    cache.codecForClass(field.getType()) == null) {
                 throw new MissingCodecException(field.getType());
             }
         }
@@ -93,18 +101,44 @@ public class ObjectCodec<T> implements Codec<T> {
             if (Modifier.isPublic(field.getModifiers())) {
                 fields[i] = new DirectFieldCodec(field, codecForField(field, cache));
             } else {
-                fields[i] = new AccessingFieldCodec(
-                        findGetter(field, possibleGetters),
-                        findSetter(field, possibleSetters),
-                        codecForField(field, cache));
+                Method getter = findGetter(field, possibleGetters);
+                Method setter = findSetter(field, possibleSetters);
+                Codec codec = codecForField(field, cache);
+                fields[i] = createCodec(field, getter, setter, codec);
             }
         }
     }
 
-    private void validateConstructor(Class<T> tClass) throws CodecGenerationException {
+    private FieldCodec createCodec(
+            Field field,
+            Method getter,
+            Method setter,
+            Codec codec) throws CodecGenerationException {
+        if (boolean.class.equals(field.getType())) {
+            return new BooleanFieldCodec(getter, setter, codec);
+        } else if (byte.class.equals(field.getType())) {
+            return new ByteFieldCodec(getter, setter, codec);
+        } else if (char.class.equals(field.getType())) {
+            return new CharFieldCodec(getter, setter, codec);
+        } else if (short.class.equals(field.getType())) {
+            return new ShortFieldCodec(getter, setter, codec);
+        } else if (int.class.equals(field.getType())) {
+            return new IntFieldCodec(getter, setter, codec);
+        } else if (long.class.equals(field.getType())) {
+            return new LongFieldCodec(getter, setter, codec);
+        } else if (float.class.equals(field.getType())) {
+            return new FloatFieldCodec(getter, setter, codec);
+        } else if (double.class.equals(field.getType())) {
+            return new DoubleFieldCodec(getter, setter, codec);
+        } else {
+            return new AccessingFieldCodec(getter, setter, codec);
+        }
+    }
+
+    private Creator generateConstructor(Class<T> tClass) throws CodecGenerationException {
         try {
-            tClass.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+            return LambdaMetaFactoryUtils.wrapNorArgsConstructor(Creator.class, tClass.getConstructor(), Object.class);
+        } catch (NoSuchMethodException e) {
             throw new CodecGenerationException("Missing no arg constructor for " + tClass.getSimpleName(), e);
         }
     }
@@ -119,8 +153,8 @@ public class ObjectCodec<T> implements Codec<T> {
                 String lcField = field.getName().toLowerCase(Locale.ENGLISH);
                 String lcMethod = method.getName().toLowerCase(Locale.ENGLISH);
                 if (lcMethod.startsWith("set") &&
-                    lcMethod.length() == lcField.length() + 3 &&
-                    lcMethod.endsWith(lcField)) {
+                        lcMethod.length() == lcField.length() + 3 &&
+                        lcMethod.endsWith(lcField)) {
                     return method;
                 }
             }
@@ -134,9 +168,9 @@ public class ObjectCodec<T> implements Codec<T> {
         while (!clazz.equals(Object.class)) {
             for (Method method : clazz.getDeclaredMethods()) {
                 if (Modifier.isPublic(method.getModifiers()) &&
-                    !Modifier.isAbstract(method.getModifiers()) &&
-                    method.getReturnType().equals(void.class) &&
-                    method.getParameterCount() == 1) {
+                        !Modifier.isAbstract(method.getModifiers()) &&
+                        method.getReturnType().equals(void.class) &&
+                        method.getParameterCount() == 1) {
                     possibleSetters.add(method);
                 }
             }
@@ -151,14 +185,14 @@ public class ObjectCodec<T> implements Codec<T> {
                 String lcField = field.getName().toLowerCase(Locale.ENGLISH);
                 String lcMethod = method.getName().toLowerCase(Locale.ENGLISH);
                 if (lcMethod.startsWith("get") &&
-                    lcMethod.length() == lcField.length() + 3 &&
-                    lcMethod.endsWith(lcField)) {
+                        lcMethod.length() == lcField.length() + 3 &&
+                        lcMethod.endsWith(lcField)) {
                     return method;
                 }
                 if (field.getType().equals(boolean.class) &&
-                    lcMethod.startsWith("is") &&
-                    lcMethod.length() == lcField.length() + 2 &&
-                    lcMethod.endsWith(lcField)) {
+                        lcMethod.startsWith("is") &&
+                        lcMethod.length() == lcField.length() + 2 &&
+                        lcMethod.endsWith(lcField)) {
                     return method;
                 }
             }
@@ -172,7 +206,7 @@ public class ObjectCodec<T> implements Codec<T> {
         while (!clazz.equals(Object.class)) {
             for (Field field : clazz.getDeclaredFields()) {
                 if (!Modifier.isTransient(field.getModifiers()) &&
-                    !Modifier.isStatic(field.getModifiers())) {
+                        !Modifier.isStatic(field.getModifiers())) {
                     if (Modifier.isFinal(field.getModifiers())) {
                         throw new CodecGenerationException("Would not be able to set the value of the final field " + field.getName(), null);
                     }
@@ -205,9 +239,9 @@ public class ObjectCodec<T> implements Codec<T> {
         while (!clazz.equals(Object.class)) {
             for (Method method : clazz.getDeclaredMethods()) {
                 if (Modifier.isPublic(method.getModifiers()) &&
-                    !Modifier.isAbstract(method.getModifiers()) &&
-                    !method.getReturnType().equals(void.class) &&
-                    method.getParameterCount() == 0) {
+                        !Modifier.isAbstract(method.getModifiers()) &&
+                        !method.getReturnType().equals(void.class) &&
+                        method.getParameterCount() == 0) {
                     possibleGetters.add(method);
                 }
             }
@@ -217,6 +251,7 @@ public class ObjectCodec<T> implements Codec<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public final T read(InputStreamWrapper wrapper) throws IOException {
         Byte marker;
         if ((marker = wrapper.read1()) != reservedByte) {
@@ -227,10 +262,10 @@ public class ObjectCodec<T> implements Codec<T> {
         }
         T instance;
         try {
-            instance = tClass.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+            instance = (T) creator.build();
+        } catch (Exception e) {
             //Really should not be possible
-            throw new IOException("Missing no arg constructor for " + tClass.getSimpleName(), e);
+            throw new IOException("Could not create a new instance of " + tClass.getSimpleName(), e);
         }
         for (FieldCodec writer : fields) {
             writer.read(wrapper, instance);

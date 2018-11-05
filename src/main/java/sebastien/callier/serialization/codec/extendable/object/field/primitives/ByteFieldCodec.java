@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Sebastien Callier
+ * Copyright 2018 Sebastien Callier
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package sebastien.callier.serialization.codec.extendable.object.field;
+package sebastien.callier.serialization.codec.extendable.object.field.primitives;
 
 import sebastien.callier.serialization.codec.Codec;
+import sebastien.callier.serialization.codec.extendable.object.field.FieldCodec;
+import sebastien.callier.serialization.codec.extendable.object.field.LambdaMetaFactoryUtils;
 import sebastien.callier.serialization.deserializer.InputStreamWrapper;
 import sebastien.callier.serialization.exceptions.CodecGenerationException;
 import sebastien.callier.serialization.serializer.OutputStreamWrapper;
@@ -26,31 +28,31 @@ import java.lang.reflect.Method;
 
 /**
  * @author Sebastien Callier
- * @since 2017
+ * @since 2018
  */
-public final class AccessingFieldCodec implements FieldCodec {
+public class ByteFieldCodec implements FieldCodec {
     private final Getter get;
     private final Setter set;
     private final Codec codec;
 
-    public AccessingFieldCodec(
+    public ByteFieldCodec(
             Method getter,
             Method setter,
             Codec codec) throws CodecGenerationException {
         super();
-        get = LambdaMetaFactoryUtils.wrapGetter(Getter.class, getter, Object.class);
-        set = LambdaMetaFactoryUtils.wrapSetter(Setter.class, setter, Object.class);
+        get = LambdaMetaFactoryUtils.wrapGetter(Getter.class, getter, byte.class);
+        set = LambdaMetaFactoryUtils.wrapSetter(Setter.class, setter, byte.class);
         this.codec = codec;
     }
 
     @FunctionalInterface
     public interface Getter {
-        Object get(Object instance);
+        byte get(Object instance);
     }
 
     @FunctionalInterface
     public interface Setter {
-        void set(Object instance, Object value);
+        void set(Object instance, byte value);
     }
 
     @Override
@@ -62,6 +64,6 @@ public final class AccessingFieldCodec implements FieldCodec {
     @Override
     @SuppressWarnings("unchecked")
     public void read(InputStreamWrapper wrapper, Object instance) throws IOException {
-        set.set(instance, codec.read(wrapper));
+        set.set(instance, (Byte) codec.read(wrapper));
     }
 }

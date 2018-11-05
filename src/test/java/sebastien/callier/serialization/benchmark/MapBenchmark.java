@@ -36,6 +36,7 @@ import java.util.Map;
  * @since 2017
  */
 public class MapBenchmark {
+    @SuppressWarnings("unused")
     private volatile Map map;
 
     @Test
